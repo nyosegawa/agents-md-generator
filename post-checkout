@@ -1,0 +1,109 @@
+#!/bin/bash
+# Git post-checkout hook
+# This runs after git clone and git checkout
+
+# Arguments from git
+prev_head=$1
+new_head=$2
+branch_checkout=$3
+
+# Only run on clone (when branch_checkout is 1 and we're on initial checkout)
+if [ "$branch_checkout" != "1" ]; then
+  exit 0
+fi
+
+# Debug: Log to file (uncomment to enable)
+# echo "$(date): post-checkout hook in $(pwd)" >> ~/.git-hooks.log
+
+# Count files excluding .git directory
+FILE_COUNT=$(find . -maxdepth 1 -type f 2>/dev/null | wc -l)
+DIR_COUNT=$(find . -maxdepth 1 -type d ! -name "." ! -name ".git" 2>/dev/null | wc -l)
+
+# Debug output (uncomment to enable)
+# echo "Files: $FILE_COUNT, Dirs: $DIR_COUNT" >> ~/.git-hooks.log
+
+# If AGENTS.md already exists, skip
+if [ -f "AGENTS.md" ]; then
+  exit 0
+fi
+
+# If repository appears empty or nearly empty (fewer than 3 files/dirs)
+TOTAL=$((FILE_COUNT + DIR_COUNT))
+if [ $TOTAL -lt 3 ]; then
+  cat > AGENTS.md << 'EOF'
+# Agent Guidelines
+
+**CRITICAL: Do NOT maintain backward compatibility unless explicitly requested by the user.** Break things boldly. Clean refactoring over legacy support.
+
+**TARGET: Keep total instructions under 20-30 lines.** Every instruction competes for the agent's limited instruction budget (~150-200 total). Be ruthless about what stays.
+
+---
+
+## Project Overview
+
+<!-- Update this section as the project takes shape -->
+
+**Project type:** [To be determined - e.g., web app, CLI tool, library]  
+**Primary language:** [To be determined]  
+**Key dependencies:** [To be determined]
+
+---
+
+## Commands
+
+<!-- Update these as your workflow evolves - commands change frequently -->
+
+```bash
+# Development
+# [Add your dev server command here]
+
+# Testing
+# [Add your test command here]
+
+# Build
+# [Add your build command here]
+```
+
+---
+
+## Code Conventions
+
+<!-- Keep this minimal - let tools like linters handle formatting -->
+
+- Follow the existing patterns in the codebase
+- Prefer explicit over clever
+- Delete dead code immediately
+
+---
+
+## Architecture
+
+<!-- Major architecture changes MUST trigger a rewrite of this section -->
+
+```
+[Add directory structure overview when it stabilizes]
+```
+
+---
+
+## Maintenance Notes
+
+**Keep this file lean and current:**
+
+1. **Remove placeholder sections** once you fill them in
+2. **Review regularly** - stale instructions poison the agent's context
+3. **CRITICAL: Keep total under 20-30 lines** - move detailed docs to separate files and reference them
+4. **Update commands immediately** when workflows change
+5. **Rewrite Architecture section** when major architectural changes occur
+6. **Delete anything the agent can infer** from your code
+
+**Remember:** Coding agents learn from your actual code. Only document what's truly non-obvious or critically important.
+EOF
+
+  # Create symlink for Claude Code compatibility
+  ln -s AGENTS.md CLAUDE.md
+
+  echo "✓ Created AGENTS.md and CLAUDE.md symlink"
+fi
+
+exit 0
