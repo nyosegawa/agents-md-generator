@@ -52,6 +52,7 @@ The generated `AGENTS.md` is scaffolding, not a finished document. Key principle
 - **No backward compatibility by default** — Bold refactoring over legacy support
 - **Placeholder sections** — Fill them in as your project grows, then remove the placeholders
 - **Permanent Maintenance Notes** — A reminder that `AGENTS.md` is a living document, not a config file
+- **Section protection via HTML comments** — Guards the file structure from accidental modification by agents
 
 ## Customization
 

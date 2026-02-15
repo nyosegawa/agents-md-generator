@@ -1,8 +1,11 @@
 # Agent Guidelines
 
-**CRITICAL: Do NOT maintain backward compatibility unless explicitly requested by the user.** Break things boldly. Clean refactoring over legacy support.
+<!-- Do not restructure or delete sections. Update individual values in-place when they change. -->
 
-**TARGET: Keep total instructions under 20-30 lines.** Every instruction competes for the agent's limited instruction budget (~150-200 total). Be ruthless about what stays.
+## Core Principles
+
+- **Do NOT maintain backward compatibility** unless explicitly requested. Break things boldly.
+- **Keep this file under 20-30 lines of instructions.** Every line competes for the agent's limited context budget (~150-200 total).
 
 ---
 
@@ -55,9 +58,11 @@
 
 ## Maintenance Notes
 
+<!-- This section is permanent. Do not delete. -->
+
 **Keep this file lean and current:**
 
-1. **Remove placeholder sections** once you fill them in
+1. **Remove placeholder sections** (sections still containing `[To be determined]` or `[Add your ... here]`) once you fill them in
 2. **Review regularly** - stale instructions poison the agent's context
 3. **CRITICAL: Keep total under 20-30 lines** - move detailed docs to separate files and reference them
 4. **Update commands immediately** when workflows change
