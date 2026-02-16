@@ -51,9 +51,9 @@ ghq get you/new-repo
 
 ## How It Works
 
-The script defines a thin `git()` wrapper function that runs after every `git clone`:
+The script defines thin `git()` and `ghq()` wrapper functions that run after every `git clone` / `ghq get`:
 
-1. Parses clone arguments to find the target directory
+1. Parses arguments to find the target directory
 2. Checks if the repo is empty (< 3 items excluding `.git`)
 3. Skips if `AGENTS.md` already exists
 4. Creates `AGENTS.md` from a built-in template (or custom template)

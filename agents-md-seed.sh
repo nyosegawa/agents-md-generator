@@ -128,3 +128,14 @@ git() {
   [[ -n "$dir" && -d "$dir" ]] && _agents_md_seed "$dir"
   return $rc
 }
+
+ghq() {
+  command ghq "$@"
+  local rc=$?
+  [[ $rc -ne 0 || "$1" != "get" ]] && return $rc
+
+  local dir
+  dir=$(command ghq list -p | sort | tail -1)
+  [[ -n "$dir" && -d "$dir" ]] && _agents_md_seed "$dir"
+  return $rc
+}
