@@ -1,36 +1,25 @@
-#!/bin/bash
-# Git post-checkout hook
-# This runs after git clone and git checkout
+#!/usr/bin/env bash
+# agents-md-seed: git clone時にAGENTS.mdを自動生成するシェルラッパー
+# Usage: .bashrc / .zshrc に以下を追加
+#   source /path/to/agents-md-seed.sh
 
-# Arguments from git
-prev_head=$1
-new_head=$2
-branch_checkout=$3
+_agents_md_seed() {
+  local dir="$1"
 
-# Only run on clone (when branch_checkout is 1 and we're on initial checkout)
-if [ "$branch_checkout" != "1" ]; then
-  exit 0
-fi
+  [[ -f "$dir/AGENTS.md" ]] && return 0
 
-# Debug: Log to file (uncomment to enable)
-# echo "$(date): post-checkout hook in $(pwd)" >> ~/.git-hooks.log
+  local file_count dir_count total
+  file_count=$(find "$dir" -maxdepth 1 -type f 2>/dev/null | wc -l | tr -d ' ')
+  dir_count=$(find "$dir" -maxdepth 1 -type d ! -name "." ! -name ".git" 2>/dev/null | wc -l | tr -d ' ')
+  total=$((file_count + dir_count))
+  (( total >= 3 )) && return 0
 
-# Count files excluding .git directory
-FILE_COUNT=$(find . -maxdepth 1 -type f 2>/dev/null | wc -l)
-DIR_COUNT=$(find . -maxdepth 1 -type d ! -name "." ! -name ".git" 2>/dev/null | wc -l)
-
-# Debug output (uncomment to enable)
-# echo "Files: $FILE_COUNT, Dirs: $DIR_COUNT" >> ~/.git-hooks.log
-
-# If AGENTS.md already exists, skip
-if [ -f "AGENTS.md" ]; then
-  exit 0
-fi
-
-# If repository appears empty or nearly empty (fewer than 3 files/dirs)
-TOTAL=$((FILE_COUNT + DIR_COUNT))
-if [ $TOTAL -lt 3 ]; then
-  cat > AGENTS.md << 'EOF'
+  # カスタムテンプレートがあればそちらを使う
+  local template="${AGENTS_MD_TEMPLATE:-$HOME/.config/agents-md/template.md}"
+  if [[ -f "$template" ]]; then
+    cp "$template" "$dir/AGENTS.md"
+  else
+    cat > "$dir/AGENTS.md" << 'AGENTS_TEMPLATE'
 # Agent Guidelines
 
 <!-- Do not restructure or delete sections. Update individual values in-place when they change. -->
@@ -46,8 +35,8 @@ if [ $TOTAL -lt 3 ]; then
 
 <!-- Update this section as the project takes shape -->
 
-**Project type:** [To be determined - e.g., web app, CLI tool, library]  
-**Primary language:** [To be determined]  
+**Project type:** [To be determined - e.g., web app, CLI tool, library]
+**Primary language:** [To be determined]
 **Key dependencies:** [To be determined]
 
 ---
@@ -103,12 +92,39 @@ if [ $TOTAL -lt 3 ]; then
 6. **Delete anything the agent can infer** from your code
 
 **Remember:** Coding agents learn from your actual code. Only document what's truly non-obvious or critically important.
-EOF
+AGENTS_TEMPLATE
+  fi
 
-  # Create symlink for Claude Code compatibility
-  ln -s AGENTS.md CLAUDE.md
+  ln -s AGENTS.md "$dir/CLAUDE.md"
+  echo "✓ Created AGENTS.md and CLAUDE.md symlink in $dir"
+}
 
-  echo "✓ Created AGENTS.md and CLAUDE.md symlink"
-fi
+_agents_md_clone_dir() {
+  local positional=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -b|--branch|--depth|-o|--origin|-c|--config|-j|--jobs|--filter|\
+      --reference|--reference-if-able|--separate-git-dir|--template|\
+      --shallow-since|--shallow-exclude|--bundle-uri|--server-option)
+        shift 2 ;;
+      -*) shift ;;
+      *) positional+=("$1"); shift ;;
+    esac
+  done
+  if (( ${#positional[@]} >= 2 )); then
+    echo "${positional[1]}"
+  elif (( ${#positional[@]} == 1 )); then
+    basename "${positional[0]%/}" .git
+  fi
+}
 
-exit 0
+git() {
+  command git "$@"
+  local rc=$?
+  [[ $rc -ne 0 || "$1" != "clone" ]] && return $rc
+
+  local dir
+  dir=$(_agents_md_clone_dir "${@:2}")
+  [[ -n "$dir" && -d "$dir" ]] && _agents_md_seed "$dir"
+  return $rc
+}

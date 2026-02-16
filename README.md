@@ -2,7 +2,7 @@
 
 [日本語](README-ja.md)
 
-A git hook that automatically creates a starter `AGENTS.md` (with `CLAUDE.md` symlink) when you clone an empty repository.
+A shell wrapper that automatically creates a starter `AGENTS.md` (with `CLAUDE.md` symlink) when you clone an empty repository.
 
 > Blog post: [AGENTS.mdを自動で育てる仕組みを作った](https://nyosegawa.github.io/posts/agents-md-generator/)
 
@@ -10,15 +10,29 @@ A git hook that automatically creates a starter `AGENTS.md` (with `CLAUDE.md` sy
 
 Every new repository needs an `AGENTS.md` — the [open standard](https://agents.md/) for guiding AI coding agents (Cursor, Zed, Codex, Gemini CLI, GitHub Copilot, etc.). Claude Code reads `CLAUDE.md`. Setting up both manually every time is tedious.
 
-This hook plants the seed automatically. You just grow it as your project evolves.
+This wrapper plants the seed automatically. You just grow it as your project evolves.
 
 ## Setup
 
+Add to your `.bashrc` or `.zshrc`:
+
 ```bash
-mkdir -p ~/.git-templates/hooks
-cp post-checkout ~/.git-templates/hooks/post-checkout
-chmod +x ~/.git-templates/hooks/post-checkout
-git config --global init.templateDir ~/.git-templates
+source /path/to/agents-md-seed.sh
+```
+
+If you use ghq:
+
+```bash
+ghq get nyosegawa/agents-md-generator
+# .zshrc / .bashrc
+source "$(ghq root)/github.com/nyosegawa/agents-md-generator/agents-md-seed.sh"
+```
+
+Or download directly:
+
+```bash
+curl -sL https://raw.githubusercontent.com/nyosegawa/agents-md-generator/main/agents-md-seed.sh -o ~/.agents-md-seed.sh
+echo 'source ~/.agents-md-seed.sh' >> ~/.zshrc  # or .bashrc
 ```
 
 ## Usage
@@ -37,12 +51,27 @@ ghq get you/new-repo
 
 ## How It Works
 
-The `post-checkout` hook runs after `git clone` and:
+The script defines a thin `git()` wrapper function that runs after every `git clone`:
 
-1. Checks if the repo is empty (< 3 items excluding `.git`)
-2. Skips if `AGENTS.md` already exists
-3. Creates `AGENTS.md` from a built-in template
-4. Creates `CLAUDE.md` as a symlink to `AGENTS.md`
+1. Parses clone arguments to find the target directory
+2. Checks if the repo is empty (< 3 items excluding `.git`)
+3. Skips if `AGENTS.md` already exists
+4. Creates `AGENTS.md` from a built-in template (or custom template)
+5. Creates `CLAUDE.md` as a symlink to `AGENTS.md`
+
+## Customization
+
+### Custom template
+
+Set `AGENTS_MD_TEMPLATE` or place a template at `~/.config/agents-md/template.md`:
+
+```bash
+export AGENTS_MD_TEMPLATE="$HOME/my-agents-template.md"
+```
+
+### Empty-repo threshold
+
+The default threshold is 3 items. To change it, modify the `(( total >= 3 ))` line in `agents-md-seed.sh`.
 
 ## Template Design
 
@@ -53,16 +82,6 @@ The generated `AGENTS.md` is scaffolding, not a finished document. Key principle
 - **Placeholder sections** — Fill them in as your project grows, then remove the placeholders
 - **Permanent Maintenance Notes** — A reminder that `AGENTS.md` is a living document, not a config file
 - **Section protection via HTML comments** — Guards the file structure from accidental modification by agents
-
-## Customization
-
-Edit the template inside `post-checkout` between `cat > AGENTS.md << 'EOF'` and `EOF`.
-
-Change the empty-repo threshold:
-
-```bash
-if [ $TOTAL -lt 3 ]; then  # adjust this number
-```
 
 ## Supported Tools
 

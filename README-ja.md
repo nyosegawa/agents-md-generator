@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-空リポジトリをcloneしたときに `AGENTS.md`（と `CLAUDE.md` シンボリンク）を自動生成するgit hookです。
+空リポジトリをcloneしたときに `AGENTS.md`（と `CLAUDE.md` シンボリンク）を自動生成するシェルラッパーです。
 
 > ブログ記事: [AGENTS.mdを自動で育てる仕組みを作った](https://nyosegawa.github.io/posts/agents-md-generator/)
 
@@ -10,15 +10,29 @@
 
 新しいリポジトリを作るたびに `AGENTS.md` を手で書くのは面倒です。[AGENTS.md](https://agents.md/) はCursor、Zed、Codex、Gemini CLI、GitHub Copilotなど主要なCoding Agentが対応する標準フォーマットで、Claude Codeは `CLAUDE.md` を読みます。両方を毎回セットアップするのは地味につらい。
 
-このhookは種を自動で蒔きます。あとはプロジェクトと一緒に育てていくだけです。
+このラッパーは種を自動で蒔きます。あとはプロジェクトと一緒に育てていくだけです。
 
 ## セットアップ
 
+`.bashrc` または `.zshrc` に追加:
+
 ```bash
-mkdir -p ~/.git-templates/hooks
-cp post-checkout ~/.git-templates/hooks/post-checkout
-chmod +x ~/.git-templates/hooks/post-checkout
-git config --global init.templateDir ~/.git-templates
+source /path/to/agents-md-seed.sh
+```
+
+ghqを使っている場合:
+
+```bash
+ghq get nyosegawa/agents-md-generator
+# .zshrc / .bashrc
+source "$(ghq root)/github.com/nyosegawa/agents-md-generator/agents-md-seed.sh"
+```
+
+直接ダウンロード:
+
+```bash
+curl -sL https://raw.githubusercontent.com/nyosegawa/agents-md-generator/main/agents-md-seed.sh -o ~/.agents-md-seed.sh
+echo 'source ~/.agents-md-seed.sh' >> ~/.zshrc  # or .bashrc
 ```
 
 ## 使い方
@@ -37,12 +51,27 @@ ghq get you/new-repo
 
 ## 仕組み
 
-`post-checkout` hookが `git clone` の直後に実行され:
+`git()` ラッパー関数が `git clone` の完了後に実行され:
 
-1. リポジトリが空かどうかチェック（`.git`を除いて3項目未満）
-2. `AGENTS.md` がすでにあればスキップ
-3. 組み込みテンプレートから `AGENTS.md` を生成
-4. `CLAUDE.md` を `AGENTS.md` へのシンボリンクとして作成
+1. cloneの引数からターゲットディレクトリを特定
+2. リポジトリが空かどうかチェック（`.git`を除いて3項目未満）
+3. `AGENTS.md` がすでにあればスキップ
+4. 組み込みテンプレート（またはカスタムテンプレート）から `AGENTS.md` を生成
+5. `CLAUDE.md` を `AGENTS.md` へのシンボリンクとして作成
+
+## カスタマイズ
+
+### カスタムテンプレート
+
+`AGENTS_MD_TEMPLATE` を設定するか、`~/.config/agents-md/template.md` にテンプレートを配置:
+
+```bash
+export AGENTS_MD_TEMPLATE="$HOME/my-agents-template.md"
+```
+
+### 空リポジトリ判定の閾値
+
+デフォルトは3項目未満。`agents-md-seed.sh` 内の `(( total >= 3 ))` を変更してください。
 
 ## テンプレートの設計思想
 
@@ -53,16 +82,6 @@ ghq get you/new-repo
 - **プレースホルダーセクション** — プロジェクトの成長に合わせて埋めていき、埋めたらプレースホルダーを消す
 - **Maintenance Notesは永続** — `AGENTS.md` は設定ファイルではなく生きたドキュメントであることのリマインダー
 - **HTMLコメントによるセクション保護** — エージェントによるファイル構造の意図しない変更を防止
-
-## カスタマイズ
-
-テンプレートの内容は `post-checkout` 内の `cat > AGENTS.md << 'EOF'` 〜 `EOF` の間を編集してください。
-
-空リポジトリ判定の閾値を変更:
-
-```bash
-if [ $TOTAL -lt 3 ]; then  # この数値を調整
-```
 
 ## 対応ツール
 
