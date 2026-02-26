@@ -1,0 +1,12 @@
+{
+  "description": "git clone時にAGENTS.md（とCLAUDE.mdシンボリックリンク）を自動生成するシェルラッパー。Bashスクリプトのみで構成され、.bashrc/.zshrcにsourceして使う。",
+  "commands": [
+    { "name": "shellcheck", "command": "shellcheck agents-md-seed.sh" }
+  ],
+  "links": [
+    { "name": "GitHub", "url": "https://github.com/nyosegawa/agents-md-generator" },
+    { "name": "agents.md spec", "url": "https://agents.md/" },
+    { "name": "Blog post", "url": "https://nyosegawa.github.io/posts/agents-md-generator/" }
+  ],
+  "shortcuts": []
+}
