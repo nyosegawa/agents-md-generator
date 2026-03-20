@@ -135,7 +135,7 @@ ghq() {
   [[ $rc -ne 0 || "$1" != "get" ]] && return $rc
 
   local dir
-  dir=$(command ghq list -p | sort | tail -1)
+  dir=$(ls -1td $(command ghq root)/*/*/* | head -1)
   [[ -n "$dir" && -d "$dir" ]] && _agents_md_seed "$dir"
   return $rc
 }
